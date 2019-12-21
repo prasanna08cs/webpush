@@ -1,8 +1,8 @@
 const webpush = require('web-push');
 var moment = require('moment');
 let date = moment();
- date =moment(date).format("YYYY-MM-DD HH:mm:ss");
-
+date =moment(date).format("YYYY-MM-DD HH:mm:ss");
+let rabbitmq_publisher  = require("./producer");
 const knex = require('knex')({
     client: 'mysql',
     // debug: ['ComQueryPacket'],
@@ -104,7 +104,10 @@ app.get("/send", async function (req, res) {
                 "camp_id": camp_id,
                 "desc": s.description
             });
-            webpush.sendNotification(JSON.parse(u.subscription_key), payload);
+
+            let publish_data= {"key":u.subscription_key,"data":payload};
+            rabbitmq_publisher.publish(JSON.stringify(publish_data));
+            // webpush.sendNotification(JSON.parse(u.subscription_key), payload);
             console.log("sending tto tolne")
         }
     }
