@@ -24,4 +24,14 @@ opem http://localhost:5001/site2
 https://www.getpostman.com/collections/4f935b95c2f440e5c2be
 Download the api collection from postman and start sending campagin
 
+Workflow.
+
+Admin selects the user for the campagin.
+campaign will be submitted to the queue.
+consumer will pick and start sending the push notofications to the user and update status in db
+Once user clicks on the notification ,  same thing wil be submitted  in the queue.  
+worker will pickup from queue and update the status in the db.
+
+By using postman apis we can  send the campaign and check the status
+
 
