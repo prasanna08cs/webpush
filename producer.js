@@ -1,6 +1,9 @@
 const amqp = require('amqplib/callback_api');
-const amqpConn = null;
-const  url ="http://develop:infini1234@10.20.30.25";
+let amqpConn = null;
+const  url ="amqp://develop:infini1234@10.20.30.25:5672";
+const exchange ="dummy_exchange";
+const queue = "dummy_queue";
+const  routing="dummy.queue";
 function start(data) {
     amqp.connect(url + "?heartbeat=60", function(err, conn) {
         if (err) {
@@ -31,7 +34,7 @@ function whenConnected(data) {
 }
 function startPublisher(data) {
     amqpConn.createConfirmChannel(function(err, ch) {
-        if (closeOnErr(err)) return;
+        if ((err)) return;
         ch.on("error", function(err) {
             console.error("[AMQP] channel error", err.message);
         });
@@ -40,14 +43,26 @@ function startPublisher(data) {
         });
         pubChannel = ch;
         //assert the exchange: 'my-delay-exchange' to be a x-delayed-message,
-        pubChannel.assertExchange(exchange, "x-delayed-message", {autoDelete: false, durable: true, passive: true,  arguments: {'x-delayed-type':  "direct"}})
+        pubChannel.assertExchange(exchange, "topic", {autoDelete: false, durable: true, passive: true})
         //Bind the queue: "jobs" to the exchnage: "my-delay-exchange" with the binding key "jobs"
-        pubChannel.bindQueue('jobs', exchange ,'jobs');
+        pubChannel.bindQueue(queue, exchange ,'');
+        try {
+            pubChannel.publish(exchange, routing, Buffer.from( data), {},
+                function(err, ok) {
+                    if (err) {
+                        console.error("[AMQP] publish", err);
 
-        while (true) {
-            var m = offlinePubQueue.shift();
-            if (!m) break;
-            publish(m[0], m[1], m[2]);
+                        //pubChannel.connection.close();
+                    } else{
+                        console.log("published to queue")
+                    }
+                });
+        } catch (e) {
+            console.error("[AMQP] failed", e.message);
+
         }
+
+
     });
 }
+module.exports.publish = start;
