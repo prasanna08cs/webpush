@@ -3,15 +3,13 @@ let amqpConn = null;
 const config = require("./config.json");
 const url = config.rabbitmq_url;
 const exchange = config.webpush_exchange;
-const queue = config.publisher_queue;
-const routing = config.publisher_routing;
+const queue = config.status_update_queue;
+const routing = config.status_update_binding;
 const webpush = require('web-push');
 const moment = require('moment');
+const db = require("./library/db");
 let date = moment();
 date = moment(date).format("YYYY-MM-DD HH:mm:ss");
-const  db =require("./library/db");
-
-
 function start() {
     amqp.connect(url + "?heartbeat=60", function (err, conn) {
         if (err) {
@@ -73,31 +71,10 @@ function startWorker() {
 
         async function work(msg, cb) {
             let queue_data = JSON.parse(msg.content.toString());
+            console.log(queue_data);
+            db.updateStatus(queue_data);
+             console.log("awaited")
 
-            if (!queue_data.length) {
-                return;
-            }
-
-            for (let d of queue_data) {
-                let data = JSON.parse(d.data);
-
-                let quer = await db.getCampData(data.camp_id);
-                quer =quer[0];
-
-                let site = await db.getSiteDetails(quer.site_id);
-                site =site[0];
-                let insert = await  db.setCampaginData([{
-                    "created_at": date,
-                    camp_id: data.camp_id,
-                    user_id: data.user_id,
-                    status: "s"
-                }]);
-
-                webpush.setVapidDetails('mailto:prasanna08cs@gmail.com', site.publicVapidKey, site.privateVapidKey);
-                webpush.sendNotification(JSON.parse(d.key), d.data);
-                console.log("sent the notification", insert)
-
-            }
             cb(true);
         }
     });
