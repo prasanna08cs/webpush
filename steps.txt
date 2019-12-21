@@ -15,6 +15,8 @@ $ cd webpush
 $ npm install 
 $ node  server.js
 $ node server1.js
+$ node consumer.js
+$ node consumer_status_update.js
 ```
 Open the http://localhost:5000/site1
 opem http://localhost:5001/site2
